@@ -1,4 +1,5 @@
 use std::iter::Peekable;
+use std::ops::RemAssign;
 
 use crate::ast::{BinaryOperator, Expression, Function, Statement};
 use crate::lexer::Token;
@@ -15,44 +16,20 @@ fn parse_primary(
 fn parse_expression(
     tokens_iter: &mut Peekable<impl Iterator<Item = Token>>,
 ) -> Result<Expression, String> {
-    let left = parse_primary(tokens_iter);
-    match tokens_iter.peek() {
-        Some(&Token::Plus) => {
-            tokens_iter.next();
-            Ok(Expression::BinaryOperation(
-                Box::new(left?),
-                BinaryOperator::Add,
-                Box::new(parse_expression(tokens_iter)?),
-            ))
-        }
-        Some(&Token::Minus) => {
-            tokens_iter.next();
-            Ok(Expression::BinaryOperation(
-                Box::new(left?),
-                BinaryOperator::Subtract,
-                Box::new(parse_expression(tokens_iter)?),
-            ))
-        }
-        Some(&Token::Asterisk) => {
-            tokens_iter.next();
-            Ok(Expression::BinaryOperation(
-                Box::new(left?),
-                BinaryOperator::Multiply,
-                Box::new(parse_expression(tokens_iter)?),
-            ))
-        }
-        Some(&Token::Slash) => {
-            tokens_iter.next();
-            Ok(Expression::BinaryOperation(
-                Box::new(left?),
-                BinaryOperator::Divide,
-                Box::new(parse_expression(tokens_iter)?),
-            ))
-        }
-        Some(&Token::Semicolon) => Ok(left?),
-        None => Ok(left?),
-        _ => Err(format!("unexpected expression")),
+    let mut left = parse_primary(tokens_iter)?;
+    while let Some(token) = tokens_iter.peek() {
+        let op = match token {
+            Token::Plus => BinaryOperator::Add,
+            Token::Minus => BinaryOperator::Subtract,
+            Token::Asterisk => BinaryOperator::Multiply,
+            Token::Slash => BinaryOperator::Divide,
+            _ => break,
+        };
+        tokens_iter.next();
+        let right = parse_primary(tokens_iter)?;
+        left = Expression::BinaryOperation(Box::new(left), op, Box::new(right))
     }
+    Ok(left)
 }
 fn require_token(
     tokens_iter: &mut Peekable<impl Iterator<Item = Token>>,
