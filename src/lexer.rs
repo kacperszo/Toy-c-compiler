@@ -22,7 +22,10 @@ fn scan_while_numeric(c: char, chars: &mut Peekable<Chars>) -> String {
 }
 fn scan_while_identifier(c: char, chars: &mut Peekable<Chars>) -> String {
     let mut buf = String::from(c);
-    while chars.peek().map_or(false, |&c| c.is_ascii_alphanumeric()) {
+    while chars
+        .peek()
+        .map_or(false, |&c| c.is_ascii_alphanumeric() || c == '_')
+    {
         buf.push(chars.next().unwrap());
     }
     buf
