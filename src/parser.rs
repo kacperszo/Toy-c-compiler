@@ -1,14 +1,57 @@
 use std::iter::Peekable;
 
-use crate::ast::{Expression, Function, Statement};
+use crate::ast::{BinaryOperator, Expression, Function, Statement};
 use crate::lexer::Token;
 
-fn parse_expression(
+fn parse_primary(
     tokens_iter: &mut Peekable<impl Iterator<Item = Token>>,
 ) -> Result<Expression, String> {
     match tokens_iter.next() {
         Some(Token::Number(val)) => Ok(Expression::Constant(val)),
-        _ => Err("Expression value was required".to_string()),
+        _ => Err("Prmary expression value was required".to_string()),
+    }
+}
+
+fn parse_expression(
+    tokens_iter: &mut Peekable<impl Iterator<Item = Token>>,
+) -> Result<Expression, String> {
+    let left = parse_primary(tokens_iter);
+    match tokens_iter.peek() {
+        Some(&Token::Plus) => {
+            tokens_iter.next();
+            Ok(Expression::BinaryOperation(
+                Box::new(left?),
+                BinaryOperator::Add,
+                Box::new(parse_expression(tokens_iter)?),
+            ))
+        }
+        Some(&Token::Minus) => {
+            tokens_iter.next();
+            Ok(Expression::BinaryOperation(
+                Box::new(left?),
+                BinaryOperator::Subtract,
+                Box::new(parse_expression(tokens_iter)?),
+            ))
+        }
+        Some(&Token::Asterisk) => {
+            tokens_iter.next();
+            Ok(Expression::BinaryOperation(
+                Box::new(left?),
+                BinaryOperator::Multiply,
+                Box::new(parse_expression(tokens_iter)?),
+            ))
+        }
+        Some(&Token::Slash) => {
+            tokens_iter.next();
+            Ok(Expression::BinaryOperation(
+                Box::new(left?),
+                BinaryOperator::Divide,
+                Box::new(parse_expression(tokens_iter)?),
+            ))
+        }
+        Some(&Token::Semicolon) => Ok(left?),
+        None => Ok(left?),
+        _ => Err(format!("unexpected expression")),
     }
 }
 fn require_token(
@@ -46,4 +89,3 @@ pub fn parse(tokens: Vec<Token>) -> Result<Function, String> {
         body,
     })
 }
-

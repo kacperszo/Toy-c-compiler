@@ -11,6 +11,10 @@ pub enum Token {
     ReturnKeyword,
     Number(i32),
     Semicolon,
+    Plus,
+    Minus,
+    Asterisk,
+    Slash,
 }
 
 fn scan_while_numeric(c: char, chars: &mut Peekable<Chars>) -> String {
@@ -42,6 +46,10 @@ pub fn tokenize(source: &str) -> Result<Vec<Token>, String> {
             ')' => Token::CloseParen,
             '{' => Token::OpenBrace,
             '}' => Token::CloseBrace,
+            '+' => Token::Plus,
+            '*' => Token::Asterisk,
+            '-' => Token::Minus,
+            '/' => Token::Slash,
             '0'..='9' => match scan_while_numeric(c, &mut chars).parse::<i32>() {
                 Ok(val) => Token::Number(val),
                 Err(error) => {
